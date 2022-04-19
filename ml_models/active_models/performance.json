@@ -1,0 +1,15 @@
+{
+    "total_tests": 1244,
+    "svm_accuracy": 0.923,
+    "svm_accuracy_over_threshold": 0.975,
+    "svm_count_probabilities_under_threshold": 195,
+    "rf_accuracy": 0.932,
+    "rf_accuracy_over_threshold": 0.971,
+    "rf_count_probabilities_under_threshold": 203,
+    "gb_accuracy": 0.918,
+    "gb_accuracy_over_threshold": 0.98,
+    "gb_count_probabilities_under_threshold": 249,
+    "dnn_accuracy": 0.914,
+    "dnn_accuracy_over_threshold": 0.951,
+    "dnn_count_probabilities_under_threshold": 106
+}
