@@ -19,19 +19,21 @@ from sklearn import metrics
 def train_main():
     dataset = db_controller.get_categorised_assignments()
     X_data, y_data = split_dataset(dataset)
-    X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2, random_state=4)
     y_train_dnn, y_test_dnn = y_train - 1, y_test - 1
     X_train_dnn, X_test_dnn = tfidf_vectorizer(X_train, X_test)
 
     svm = build_svm()
     rf = build_rf()
     gb = build_gb()
-    dnn = build_dnn(X_train_dnn.shape[1], 7)
+    dnn = build_dnn(X_train_dnn.shape[1])
+    # dnn = keras.models.load_model(f"{sys.path[0]}/ml_models/active_models/dnn.h5")
 
     svm.fit(X_train, y_train)
     rf.fit(X_train, y_train)
     gb.fit(X_train, y_train)
-    dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=20, batch_size=10, verbose=2)
+    # print(dnn.summary())
+    dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=100, batch_size=100, verbose=2)
 
     save_performance_scores(svm.predict_proba(X_test),
                             rf.predict_proba(X_test),
@@ -91,19 +93,21 @@ def build_gb():
                      ])
 
 
-def build_dnn(shape, nClasses, dropout=0.5):
-    # shape = equal to word vocabulary size
-    # nClasses = aantal mogelijke resultaten (categorien)
+def build_dnn(shape):
+    # shape = word vocabulary size (corpus)
     model = Sequential()  # initialize neural network
-    node = 512  # number of nodes
-    nLayers = 4  # number of  hidden layer
+    # node = 512  # number of nodes
+    node = int(round(shape*0.8))  # number of nodes
+    n_layers = 6  # number of  hidden layer
+    n_classes = 7  # aantal categorien
+    dropout = 0.5
 
     model.add(Dense(node, input_dim=shape, activation='relu'))
     model.add(Dropout(dropout))
-    for i in range(0, nLayers):
+    for i in range(0, n_layers):
         model.add(Dense(node, input_dim=node, activation='relu'))
         model.add(Dropout(dropout))
-    model.add(Dense(nClasses, activation='softmax'))
+    model.add(Dense(n_classes, activation='softmax'))
 
     model.compile(loss='sparse_categorical_crossentropy',
                   optimizer='adam',
@@ -115,11 +119,18 @@ def tfidf_vectorizer(X_train, X_test, MAX_NB_WORDS=75000):
     vectorizer = TfidfVectorizer(max_features=MAX_NB_WORDS)
     X_train = np.array(vectorizer.fit_transform(X_train).toarray())
     X_test = np.array(vectorizer.transform(X_test).toarray())
+    with open(f"{sys.path[0]}/ml_models/new_models/vectorizer", 'wb') as file:
+        pickle.dump(vectorizer, file)
     return X_train, X_test
 
 
 def categoryids_from_probabilities(probabilities):
     return np.argmax(probabilities, axis=1) + 1
+
+
+def test_dnn(dnn_proba, y_test):
+    dnn_acc, dnn_acc_ot, dnn_predictions_under_threshold = get_accuracy_scores(dnn_proba, y_test)
+    print(f"{dnn_acc}, {dnn_acc_ot}, {dnn_predictions_under_threshold}")
 
 
 def save_performance_scores(svm_proba, rf_proba, gb_proba, dnn_proba, y_test):
@@ -143,6 +154,7 @@ def save_performance_scores(svm_proba, rf_proba, gb_proba, dnn_proba, y_test):
         "dnn_accuracy_over_threshold": dnn_acc_ot,
         "dnn_count_probabilities_under_threshold": dnn_predictions_under_threshold
     }
+    print(score_data)
 
     with open(f"{sys.path[0]}/ml_models/new_models/performance.json", 'w', encoding='utf-8') as file:
         json.dump(score_data, file, ensure_ascii=False, indent=4)
@@ -156,6 +168,3 @@ def save_classifier(model, name):
 def save_dnn_model(dnn):
     dnn.save(f"{sys.path[0]}/ml_models/new_models/dnn.h5")
 
-
-def load_dnn():
-    return keras.models.load_model(f"{sys.path[0]}/ml_models/new_models/dnn.h5")

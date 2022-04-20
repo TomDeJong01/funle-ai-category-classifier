@@ -48,3 +48,24 @@ class DbConnector:
                             FROM {self.assignments_table}
                             WHERE "CategoryId" NOTNULL;""")
         return self.fetchall()
+
+    def save_prediction(self, classifier, prediction):
+        self.cursor.execute(f"""INSERT INTO "category_prediction"
+            ("AssignmentId", "Classifier", "PredictedCategoryId", "Probability")
+            VALUES({prediction["Id"]}, 
+            '{classifier}', 
+            {prediction["PredictedCategoryId"]}, 
+            {prediction["PredictionProbability"]})
+            ON CONFLICT ("AssignmentId", "Classifier") DO 
+            UPDATE SET "PredictedCategoryId" = {prediction["PredictedCategoryId"]},
+            "Probability" = {prediction["PredictionProbability"]}; 
+            """)
+
+    def update_category(self, prediction):
+        self.cursor.execute(f"""UPDATE {self.assignments_table} 
+            SET  "CategoryId" = {prediction["PredictedCategoryId"]} 
+            SET  "PredictedCategoryId" = {prediction["PredictedCategoryId"]} 
+            WHERE "Id" = {prediction["Id"]}; """)
+
+
+
