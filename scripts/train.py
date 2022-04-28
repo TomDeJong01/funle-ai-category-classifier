@@ -16,30 +16,33 @@ from sklearn import metrics
 
 
 def train_main():
+    # load categorised assignments and split in training and validation data
     dataset = db_controller.get_categorised_assignments()
     X_data, y_data = split_dataset(dataset)
     X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.2, random_state=4)
     y_train_dnn, y_test_dnn = y_train - 1, y_test - 1
     X_train_dnn, X_test_dnn = tfidf_vectorizer(X_train, X_test)
 
+    # Create new AI's
     svm = build_svm()
     rf = build_rf()
     gb = build_gb()
     dnn = build_dnn(X_train_dnn.shape[1])
-    # dnn = keras.models.load_model(f"{sys.path[0]}/ml_models/active_models/dnn.h5")
 
+    # Train AIs
     svm.fit(X_train, y_train)
     rf.fit(X_train, y_train)
     gb.fit(X_train, y_train)
-    # print(dnn.summary())
     dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=30, batch_size=30, verbose=2)
 
+    # Save performance of AI's
     save_performance_scores(svm.predict_proba(X_test),
                             rf.predict_proba(X_test),
                             gb.predict_proba(X_test),
                             dnn.predict(X_test_dnn),
                             y_test)
 
+    # Save trained AI objects
     save_classifier(svm, "svm.pkl")
     save_classifier(rf, "rf.pkl")
     save_classifier(gb, "gb.pkl")
@@ -94,6 +97,7 @@ def build_gb():
 
 def build_dnn(shape):
     # shape = word vocabulary size (corpus)
+    # Dense = layer in Neural network
     model = Sequential()  # initialize neural network
     # node = 512  # number of nodes
     node = int(round(shape*0.8))  # number of nodes
@@ -114,6 +118,7 @@ def build_dnn(shape):
     return model
 
 
+# Convert text into a readable shape for neural network.
 def tfidf_vectorizer(X_train, X_test, MAX_NB_WORDS=75000):
     vectorizer = TfidfVectorizer(max_features=MAX_NB_WORDS)
     X_train = np.array(vectorizer.fit_transform(X_train).toarray())
@@ -127,11 +132,6 @@ def categoryids_from_probabilities(probabilities):
     return np.argmax(probabilities, axis=1) + 1
 
 
-def test_dnn(dnn_proba, y_test):
-    dnn_acc, dnn_acc_ot, dnn_predictions_under_threshold = get_accuracy_scores(dnn_proba, y_test)
-    print(f"{dnn_acc}, {dnn_acc_ot}, {dnn_predictions_under_threshold}")
-
-
 def save_performance_scores(svm_proba, rf_proba, gb_proba, dnn_proba, y_test):
     svm_acc, svm_acc_ot, svm_predictions_under_threshold = get_accuracy_scores(svm_proba, y_test)
     rf_acc, rf_acc_ot, rf_predictions_under_threshold = get_accuracy_scores(rf_proba, y_test)
@@ -141,17 +141,17 @@ def save_performance_scores(svm_proba, rf_proba, gb_proba, dnn_proba, y_test):
     score_data = {
         "total_tests": len(y_test),
         "svm_accuracy": svm_acc,
-        "svm_accuracy_over_threshold": svm_acc_ot,
-        "svm_count_probabilities_under_threshold": svm_predictions_under_threshold,
+        "svm accuracy high probability": svm_acc_ot,
+        "svm tests discared due to low probability": svm_predictions_under_threshold,
         "rf_accuracy": rf_acc,
-        "rf_accuracy_over_threshold": rf_acc_ot,
-        "rf_count_probabilities_under_threshold": rf_predictions_under_threshold,
+        "rf accuracy high probability": rf_acc_ot,
+        "rf tests discared due to low probability": rf_predictions_under_threshold,
         "gb_accuracy": gb_acc,
-        "gb_accuracy_over_threshold": gb_acc_ot,
-        "gb_count_probabilities_under_threshold": gb_predictions_under_threshold,
+        "gb accuracy high probability": gb_acc_ot,
+        "gb tests discared due to low probability": gb_predictions_under_threshold,
         "dnn_accuracy": dnn_acc,
-        "dnn_accuracy_over_threshold": dnn_acc_ot,
-        "dnn_count_probabilities_under_threshold": dnn_predictions_under_threshold
+        "dnn accuracy high probability": dnn_acc_ot,
+        "dnn tests discared due to low probability": dnn_predictions_under_threshold
     }
     print(score_data)
 

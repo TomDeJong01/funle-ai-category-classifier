@@ -3,6 +3,7 @@ import shutil
 import sys
 
 
+# set new trained AI models as active for new predictions
 def update_main():
     source_dir = f"{sys.path[0]}/ml_models/new_models/"
     target_dir = f"{sys.path[0]}/ml_models/active_models/"

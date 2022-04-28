@@ -8,8 +8,10 @@ class DbConnector:
         self.ENV = dotenv_values(find_dotenv("../.env"))
         self.assignments_table = self.ENV["ASSIGNMENTS_TABLE"]
         self._conn = self.connect()
-        print("connect to db")
-        self._cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        try:
+            self._cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        except AttributeError as e:
+            print(f"cannot connect to database: {e}")
 
     def connect(self):
         try:
@@ -64,6 +66,6 @@ class DbConnector:
 
     def update_category(self, prediction):
         self.cursor.execute(f"""UPDATE {self.assignments_table} 
-            SET  "CategoryIdTest" = {prediction["PredictedCategoryId"]} ,
+            SET  "CategoryId" = {prediction["PredictedCategoryId"]} ,
             "PredictedCategoryId" = {prediction["PredictedCategoryId"]} 
             WHERE "Id" = {prediction["Id"]}; """)
