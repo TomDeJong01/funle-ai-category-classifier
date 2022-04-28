@@ -10,4 +10,3 @@ def update_main():
 
     for file_name in file_names:
         shutil.move(os.path.join(source_dir, file_name), os.path.join(target_dir, file_name))
-

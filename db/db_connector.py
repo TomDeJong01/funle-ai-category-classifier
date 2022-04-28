@@ -7,8 +7,9 @@ class DbConnector:
     def __init__(self):
         self.ENV = dotenv_values(find_dotenv("../.env"))
         self.assignments_table = self.ENV["ASSIGNMENTS_TABLE"]
-        self.conn = self.connect()
-        self._cursor = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        self._conn = self.connect()
+        print("connect to db")
+        self._cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     def connect(self):
         try:
@@ -19,12 +20,12 @@ class DbConnector:
                 port=self.ENV["PORT"],
                 password=self.ENV["PASSWORD"])
         except psycopg2.Error as err:
-            print(f"connection error: {err.__class__.__name__}")
+            print(f"cannot connect to database, error: {err.__class__.__name__}")
             pass
 
     @property
     def connection(self):
-        return self.conn
+        return self._conn
 
     @property
     def cursor(self):
@@ -57,15 +58,12 @@ class DbConnector:
             {prediction["PredictedCategoryId"]}, 
             {prediction["PredictionProbability"]})
             ON CONFLICT ("AssignmentId", "Classifier") DO 
-            UPDATE SET "PredictedCategoryId" = {prediction["PredictedCategoryId"]},
-            "Probability" = {prediction["PredictionProbability"]}; 
+                UPDATE SET "PredictedCategoryId" = {prediction["PredictedCategoryId"]},
+                "Probability" = {prediction["PredictionProbability"]}; 
             """)
 
     def update_category(self, prediction):
         self.cursor.execute(f"""UPDATE {self.assignments_table} 
-            SET  "CategoryId" = {prediction["PredictedCategoryId"]} 
-            SET  "PredictedCategoryId" = {prediction["PredictedCategoryId"]} 
+            SET  "CategoryIdTest" = {prediction["PredictedCategoryId"]} ,
+            "PredictedCategoryId" = {prediction["PredictedCategoryId"]} 
             WHERE "Id" = {prediction["Id"]}; """)
-
-
-

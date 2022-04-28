@@ -1,5 +1,5 @@
 import sys
-from scripts import predict, train, update, compare, tune_dnn
+from scripts import predict, train, update, compare
 
 
 def main(argv):

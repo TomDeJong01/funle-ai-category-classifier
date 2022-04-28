@@ -1,13 +1,8 @@
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from tensorflow import keras
-
-from db import db_connector, db_controller
+from db import db_controller
 import sys
 import pickle
-
-from db.db_controller import save_prediction
-
 
 def predict_main():
     dataset = db_controller.get_uncategorised_assignments()
@@ -18,17 +13,17 @@ def predict_main():
     dnn = load_dnn()
 
     vectorizer = load_vectorizer()
-    titles_tfidf =  np.array(vectorizer.transform(titles).toarray())
+    titles_tfidf = np.array(vectorizer.transform(titles).toarray())
 
     svm_predicted = create_prediction_result_object(ids, svm.predict_proba(titles), titles)
     rf_predicted = create_prediction_result_object(ids, rf.predict_proba(titles), titles)
     gb_predicted = create_prediction_result_object(ids, gb.predict_proba(titles), titles)
     dnn_predicted = create_prediction_result_object(ids, dnn.predict(titles_tfidf), titles)
 
-    # save_prediction("svm", svm_predicted)
-    # save_prediction("rf", rf_predicted)
-    # save_prediction("gb", gb_predicted)
-    # save_prediction("dnn", dnn_predicted)
+    db_controller.save_prediction("svm", svm_predicted)
+    db_controller.save_prediction("rf", rf_predicted)
+    db_controller.save_prediction("gb", gb_predicted)
+    db_controller.save_prediction("dnn", dnn_predicted)
 
     pool_predictions(svm_predicted, rf_predicted, gb_predicted, dnn_predicted)
 
@@ -43,7 +38,7 @@ def split_dataset(dataset):
 
 
 def load_vectorizer():
-    with open(f"{sys.path[0]}/ml_models/new_models/vectorizer", 'rb') as file:
+    with open(f"{sys.path[0]}/ml_models/active_models/vectorizer.pkl", 'rb') as file:
         return pickle.load(file)
 
 
@@ -53,7 +48,6 @@ def load_dnn():
 
 def load_model(name):
     file_path = f"{sys.path[0]}/ml_models/active_models/{name}"
-    print(f"path: {file_path}")
     try:
         with open(file_path, 'rb') as file:
             return pickle.load(file)
@@ -75,9 +69,7 @@ def create_prediction_result_object(ids, predicted_probas, titles):
 
 
 def pool_predictions(svm_predicted, rf_predicted, gb_predicted, dnn_predicted):
-    any_under = 0
-    avg_under = 0
-    count = 0
+    pooled_results = np.array([])
     for i in range(len(svm_predicted)):
         predicted = np.array([svm_predicted[i]["PredictedCategoryId"],
                               rf_predicted[i]["PredictedCategoryId"],
@@ -91,16 +83,15 @@ def pool_predictions(svm_predicted, rf_predicted, gb_predicted, dnn_predicted):
         unique, counts = np.unique(predicted, return_counts=True)
 
         if len(unique) == 1:
-            count +=1
-            if np.amin(proba) < 0.8:
-                # print(np.average(proba))
-                any_under += 1
-            if np.average(proba) < 0.8:
-                print(f"{round(np.average(proba), 3)}, {proba}")
-                avg_under += 1
+            categoryId = None
+            if np.average(proba) >= 0.8:
+                categoryId = dnn_predicted[i]["PredictedCategoryId"]
+            pooled_results = np.append(pooled_results, {
+                "Id": dnn_predicted[i]["Id"],
+                "CategoryId": categoryId,
+                "PredictedCategoryId": gb_predicted[i]["PredictedCategoryId"]
+            })
+    print("update categories*")
+    # db_controller.update_assignment_category_ids(pooled_results)
 
-    print(f"total:{len(svm_predicted)}count:{count}, min_under: {any_under}, avg_under: {avg_under}")
-        # print(len(unique))
-        # print(f"u: {unique}: {counts}")
-    # print(f"len: {len(svm_predicted)}\n1: {count_1}\n2: {count_2}\n3: {count_3}\n4: {count_more}")
 

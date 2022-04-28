@@ -10,7 +10,6 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from tensorflow import keras
 from keras.layers import Dropout, Dense
 from keras.models import Sequential
 from sklearn import metrics
@@ -33,7 +32,7 @@ def train_main():
     rf.fit(X_train, y_train)
     gb.fit(X_train, y_train)
     # print(dnn.summary())
-    dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=100, batch_size=100, verbose=2)
+    dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=30, batch_size=30, verbose=2)
 
     save_performance_scores(svm.predict_proba(X_test),
                             rf.predict_proba(X_test),
@@ -119,7 +118,7 @@ def tfidf_vectorizer(X_train, X_test, MAX_NB_WORDS=75000):
     vectorizer = TfidfVectorizer(max_features=MAX_NB_WORDS)
     X_train = np.array(vectorizer.fit_transform(X_train).toarray())
     X_test = np.array(vectorizer.transform(X_test).toarray())
-    with open(f"{sys.path[0]}/ml_models/new_models/vectorizer", 'wb') as file:
+    with open(f"{sys.path[0]}/ml_models/new_models/vectorizer.pkl", 'wb') as file:
         pickle.dump(vectorizer, file)
     return X_train, X_test
 
@@ -167,4 +166,3 @@ def save_classifier(model, name):
 
 def save_dnn_model(dnn):
     dnn.save(f"{sys.path[0]}/ml_models/new_models/dnn.h5")
-
