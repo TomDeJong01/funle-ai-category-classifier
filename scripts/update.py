@@ -4,10 +4,31 @@ import sys
 
 
 # set new trained AI models as active for new predictions
-def update_main():
-    source_dir = f"{sys.path[0]}/ml_models/new_models/"
-    target_dir = f"{sys.path[0]}/ml_models/active_models/"
-    file_names = os.listdir(source_dir)
+from termcolor import colored
 
-    for file_name in file_names:
+
+def update_main():
+    # Check if there are new trained AI's to update
+    if len(os.listdir(f"{sys.path[0]}/ml_models/new_models/")) == 0:
+        print(colored("No new trained ai found.\n First train new AI's", "yellow"))
+        return
+    # Move active to old
+    if len(os.listdir(f"{sys.path[0]}/ml_models/active_models/")) != 0:
+        update_models(f"{sys.path[0]}/ml_models/active_models/", f"{sys.path[0]}/ml_models/old_models/")
+    # New to Active
+    update_models(f"{sys.path[0]}/ml_models/new_models/", f"{sys.path[0]}/ml_models/active_models/")
+
+
+def restore():
+    # Old to active
+    if len(os.listdir(f"{sys.path[0]}/ml_models/old_models/")) != 0:
+        update_models(f"{sys.path[0]}/ml_models/old_models/", f"{sys.path[0]}/ml_models/active_models/")
+    else:
+        print(colored("No old AI's to restore.", "yellow"))
+        return
+
+
+def update_models(source_dir, target_dir):
+    for file_name in os.listdir(source_dir):
         shutil.move(os.path.join(source_dir, file_name), os.path.join(target_dir, file_name))
+

@@ -33,7 +33,7 @@ def train_main():
     svm.fit(X_train, y_train)
     rf.fit(X_train, y_train)
     gb.fit(X_train, y_train)
-    dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=30, batch_size=30, verbose=2)
+    dnn.fit(X_train_dnn, y_train_dnn, validation_data=(X_test_dnn, y_test_dnn), epochs=100, batch_size=100, verbose=2)
 
     # Save performance of AI's
     save_performance_scores(svm.predict_proba(X_test),

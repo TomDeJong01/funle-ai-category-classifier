@@ -6,3 +6,5 @@ python-dotenv==0.20.0
 scikit_learn==1.0.2
 setuptools==62.1.0
 tensorflow==2.8.0
+scikit-learn~=1.0.2
+termcolor~=1.1.0

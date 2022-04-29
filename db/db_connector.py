@@ -43,7 +43,8 @@ class DbConnector:
         self.cursor.execute(f"""SELECT "Id", "Title" 
                             FROM {self.assignments_table} 
                             WHERE "CategoryId" ISNULL
-                            AND "Title" NOTNULL;""")
+                            AND "Title" NOTNULL
+                            AND "Status" = 2;""")
         return self.fetchall()
 
     def get_categorised_assignments(self):

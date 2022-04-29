@@ -1,5 +1,6 @@
 import numpy as np
 from tensorflow import keras
+from termcolor import colored
 from db import db_controller
 import sys
 import pickle
@@ -50,14 +51,14 @@ def load_vectorizer():
         with open(f"{sys.path[0]}/ml_models/active_models/vectorizer.pkl", 'rb') as file:
             return pickle.load(file)
     except FileNotFoundError:
-        print("No vectorizer found for AI. retrain AI and update application")
+        print(colored("No vectorizer found for AI. retrain AI and update application", "red"))
 
 
 def load_dnn():
     try:
         dnn_model = keras.models.load_model(f"{sys.path[0]}/ml_models/active_models/dnn.h5")
     except FileNotFoundError:
-        print("AI algorithm not found, retrain AI and update application")
+        print(colored("AI algorithm not found, retrain AI and update application", "red"))
     return dnn_model
 
 
@@ -67,7 +68,7 @@ def load_model(name):
         with open(file_path, 'rb') as file:
             return pickle.load(file)
     except FileNotFoundError:
-        print(f"{name} AI not found, retrain AI and update application")
+        print(colored(f"{name} AI not found, retrain AI and update application", "red"))
 
 
 def create_prediction_result_object(ids, predicted_probas, titles):
