@@ -22,10 +22,10 @@ def predict_main():
     titles_tfidf = np.array(vectorizer.transform(titles).toarray())
 
     # Make prediction probabileties and save
-    svm_predicted = create_prediction_result_object(ids, svm.predict_proba(titles), titles)
-    rf_predicted = create_prediction_result_object(ids, rf.predict_proba(titles), titles)
-    gb_predicted = create_prediction_result_object(ids, gb.predict_proba(titles), titles)
-    dnn_predicted = create_prediction_result_object(ids, dnn.predict(titles_tfidf), titles)
+    svm_predicted = create_prediction_result_object(ids, svm.predict_proba(titles))
+    rf_predicted = create_prediction_result_object(ids, rf.predict_proba(titles))
+    gb_predicted = create_prediction_result_object(ids, gb.predict_proba(titles))
+    dnn_predicted = create_prediction_result_object(ids, dnn.predict(titles_tfidf))
 
     # Save prediction results for algorithms
     db_controller.save_prediction("svm", svm_predicted)
@@ -71,15 +71,14 @@ def load_model(name):
         print(colored(f"{name} AI not found, retrain AI and update application", "red"))
 
 
-def create_prediction_result_object(ids, predicted_probas, titles):
+def create_prediction_result_object(ids, predicted_probas):
     prediction_results = np.array([])
     predicted_categories = np.argmax(predicted_probas, axis=1) + 1
     for i in range(0, len(ids)):
         prediction_results = np.append(prediction_results, {
             "Id": ids[i],
             "PredictedCategoryId": predicted_categories[i],
-            "PredictionProbability": round(float(predicted_probas[i].max()), 3),
-            "Title": titles[i]
+            "PredictionProbability": round(float(predicted_probas[i].max()), 3)
         })
     return prediction_results
 
@@ -96,16 +95,23 @@ def pool_predictions(svm_predicted, rf_predicted, gb_predicted, dnn_predicted):
                           rf_predicted[i]["PredictionProbability"],
                           gb_predicted[i]["PredictionProbability"],
                           dnn_predicted[i]["PredictionProbability"]])
-        unique, counts = np.unique(predicted, return_counts=True)
 
+        # unique is array of distinct predicted categoryIds, counts is times the Id is found.
+        # (if al AI's predicted categoryId 4, unique=4, counts=4)
+        unique, counts = np.unique(predicted, return_counts=True)
+        print(f"{unique}, {counts}")
+
+        # check all AI's predicted the same ctegory Id
         if len(unique) == 1:
             categoryId = None
+            # Check if combined probability atleast 80%
             if np.average(proba) >= 0.8:
                 categoryId = dnn_predicted[i]["PredictedCategoryId"]
+            # create object with information for database and append to array
             pooled_results = np.append(pooled_results, {
                 "Id": dnn_predicted[i]["Id"],
                 "CategoryId": categoryId,
                 "PredictedCategoryId": gb_predicted[i]["PredictedCategoryId"]
             })
-    db_controller.update_assignment_category_ids(pooled_results)
+    # db_controller.update_assignment_category_ids(pooled_results)
 
