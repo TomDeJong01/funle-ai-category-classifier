@@ -1,44 +1,34 @@
-import sys
 from termcolor import colored
-
 from scripts import predict, train, update, compare
 
 
-def main(argv):
-    try:
-        if argv == "-h" or argv == "help" or argv == "--help":
-            print("\nUse a command line argument to execute the specified action:\n"
-                  "    -p: Make predictions on assignments without a categoryId\n"
-                  "    -t: Retrain AI with updated dataset (the new ai wont has to be activated with -u)\n"
-                  "    -c: Compare newly trained AI performance with performance of AI currently in use\n"
-                  "    -u: Use newly trained AI\n"
-                  "    -r: Restore old AI and discard AI currently in use)\n")
-        elif argv == "-p" or argv == "predict":
+def main_menu():
+    help_text = "\nUse a command line argument to execute the specified action:\n"\
+                "    -p: Make predictions on assignments without a categoryId\n"\
+                "    -t: Retrain AI with updated dataset (the new ai wont has to be activated with -u)\n"\
+                "    -c: Compare newly trained AI performance with performance of AI currently in use\n"\
+                "    -u: Use newly trained AI\n"\
+                "    -r: Restore old AI and discard AI currently in use)\n"
+    while True:
+        ai_command = input(help_text)
+        if ai_command == "-h" or ai_command == "help" or ai_command == "--help":
+            print(help_text)
+        elif ai_command == "-p" or ai_command == "predict":
             predict.predict_main()
-        elif argv == "-t" or argv == "train":
+        elif ai_command == "-t" or ai_command == "train":
             train.train_main()
-        elif argv == "-c" or argv == "compare":
+        elif ai_command == "-c" or ai_command == "compare":
             compare.compare_main()
-        elif argv == "-u" or argv == "update":
+        elif ai_command == "-u" or ai_command == "update":
             update.update_main()
-        elif argv == "-r" or argv == "restore":
+        elif ai_command == "-r" or ai_command == "restore":
             update.restore()
+        elif ai_command == "--test":
+            print(colored("Dit is een testje, om de app iets te laten doen", "green"))
         else:
-            print(colored(f"Unknown argument: {argv}\n--help for command line arguments\n", "yellow"))
-    except ModuleNotFoundError as err:
-        print(colored(f"error raised: {err}", "red"))
-    finally:
-        return
+            print(colored("wrong input", "red"), f"\n{help_text}")
+            continue
 
 
 if __name__ == '__main__':
-    try:
-        if len(sys.argv) != 2:
-            print(colored(f"{len(sys.argv) - 1} command line argument found, "
-                          "use --help for command line arguments", "yellow"))
-        else:
-            main(sys.argv[1])
-    except Exception as e:
-        print(colored("An unexpected error occurred", "red"))
-        print(e)
-        print(colored("application crashed", "red"))
+    main_menu()

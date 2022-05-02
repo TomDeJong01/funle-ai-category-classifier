@@ -99,7 +99,6 @@ def pool_predictions(svm_predicted, rf_predicted, gb_predicted, dnn_predicted):
         # unique is array of distinct predicted categoryIds, counts is times the Id is found.
         # (if al AI's predicted categoryId 4, unique=4, counts=4)
         unique, counts = np.unique(predicted, return_counts=True)
-        print(f"{unique}, {counts}")
 
         # check all AI's predicted the same ctegory Id
         if len(unique) == 1:
@@ -113,5 +112,5 @@ def pool_predictions(svm_predicted, rf_predicted, gb_predicted, dnn_predicted):
                 "CategoryId": categoryId,
                 "PredictedCategoryId": gb_predicted[i]["PredictedCategoryId"]
             })
-    # db_controller.update_assignment_category_ids(pooled_results)
+    db_controller.update_assignment_category_ids(pooled_results)
 

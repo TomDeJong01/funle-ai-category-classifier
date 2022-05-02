@@ -10,7 +10,7 @@ from termcolor import colored
 def update_main():
     # Check if there are new trained AI's to update
     if len(os.listdir(f"{sys.path[0]}/ml_models/new_models/")) == 0:
-        print(colored("No new trained ai found.\n First train new AI's", "yellow"))
+        print(colored("No new trained ai found.\nFirst train new AI's", "yellow"))
         return
     # Move active to old
     if len(os.listdir(f"{sys.path[0]}/ml_models/active_models/")) != 0:
